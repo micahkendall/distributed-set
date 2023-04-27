@@ -29,7 +29,7 @@ fn list_id(utxo: OutputReference) -> ListId {
 
 type ListMintRedeemer {
   Genesis
-  SplitM(OutputReference, Key)
+  SplitM(OutputReference)
 }
 
 fn unvalue(v: Value) -> List<(PolicyId, List<(AssetName, Int)>)> {
@@ -107,8 +107,27 @@ validator(genesis_utxo: OutputReference, control_script: Credential) {
       // need to enforce it is minted to the control script, that the datum is correct, and the value is correct.
       // on insert, if 1 token is spent, allow 1 additional token to be minted,
       // and the control validator ensures that additional token is correctly linked
-      SplitM(listId, key) ->
+      SplitM(new_ref) -> {
+        expect True =
+          list.any(inputs, fn(input) { input.output_reference == new_ref })
+        let asset_name =
+          list_id(new_ref)
+        expect True =
+          minted_here == (this_policy, [(asset_name, 1)])
+        expect [ctrl_inp] =
+          list.filter(
+            inputs,
+            fn(input) {
+              input.output.address.payment_credential == control_script
+            },
+          )
+        expect [out1, out2] =
+          list.filter(
+            outputs,
+            fn(output) { output.address.payment_credential == control_script },
+          )
         False
+      }
     }
   }
 }
@@ -184,7 +203,12 @@ validator {
       )
     // assert only one input from this script
     expect [_] =
-      list.filter(inputs, fn(input) { input.output.address == this_address })
+      list.filter(
+        inputs,
+        fn(input) {
+          input.output.address.payment_credential == this_address.payment_credential
+        },
+      )
     expect ListDatum(id, next, is_head, values, req): ListDatum =
       this_list_raw
     // the list is assumed to be sorted as invariant is maintained by mint,control
@@ -213,7 +237,12 @@ validator {
 
         // TODO: check every input value is included in the new values
         expect [Output(_, new_val, InlineDatum(new_list_raw), None)] =
-          list.filter(outputs, fn(output) { output.address == this_address })
+          list.filter(
+            outputs,
+            fn(output) {
+              output.address.payment_credential == this_address.payment_credential
+            },
+          )
         expect ListDatum(new_id, new_next, new_is_head, new_values, new_req): ListDatum =
           new_list_raw
         // need to add asset_value check (that nft is maintained)
@@ -228,7 +257,12 @@ validator {
           Output(_, new_val, InlineDatum(new_list_raw), None),
           Output(_, new_val_2, InlineDatum(new_list_raw_2), None),
         ] =
-          list.filter(outputs, fn(output) { output.address == this_address })
+          list.filter(
+            outputs,
+            fn(output) {
+              output.address.payment_credential == this_address.payment_credential
+            },
+          )
         // either new_list_raw points to new_list_raw_2, or vice versa
         // needs to be decided for validation
         False
