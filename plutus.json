@@ -1,0 +1,10 @@
+{
+  "preamble": {
+    "title": "micahkendall/distributed-set",
+    "description": "Aiken contracts for project 'micahkendall/distributed-set'",
+    "version": "0.0.0",
+    "plutusVersion": "v2",
+    "license": "Apache-2.0"
+  },
+  "validators": []
+}

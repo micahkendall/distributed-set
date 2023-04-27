@@ -1,0 +1,14 @@
+name = "micahkendall/distributed-set"
+version = "0.0.0"
+license = "Apache-2.0"
+description = "Aiken contracts for project 'micahkendall/distributed-set'"
+
+[repository]
+user = "micahkendall"
+project = "distributed-set"
+platform = "github"
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "main"
+source = "github"
