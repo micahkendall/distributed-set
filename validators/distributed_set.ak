@@ -14,9 +14,6 @@ use aiken/transaction/value.{AssetName, PolicyId, Value, tokens}
 // any value can be a key, by serialising and hashing
 // we use a type alias to make it easier to change the key type,
 // as there isn't type level parameterization in Aiken
-type Key =
-  PolicyId
-
 type ListId =
   Hash<Blake2b_224, OutputReference>
 
@@ -140,7 +137,8 @@ type ListDatum {
   next: Option<ListId>,
   is_head: Bool,
   // may need artificial length limit on this list to prevent DoS
-  values: List<Key>,
+  // Length limit on List AND on bytearray will be necessary
+  values: List<ByteArray>,
   requires: Option<InvokedScript>,
 }
 
