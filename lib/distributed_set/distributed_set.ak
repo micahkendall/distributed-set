@@ -3,3 +3,7 @@
 
 // should be able to write a script utilising distributed sets without needing to know about the underlying data structure
 // e.g. a script that checks if a key is in a set, and if not, adds it to the set
+
+fn nothing() {
+  todo
+}
