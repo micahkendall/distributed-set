@@ -1,0 +1,1 @@
+aiken build && deno run -A lucid/blueprint.ts

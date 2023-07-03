@@ -1,0 +1,29 @@
+{
+  "imports": {
+    "/": "./",
+    "./": "./",
+    "lucid": "https://deno.land/x/lucid@0.10.6/mod.ts",
+    "src": "./src"
+  },
+  "lint": {
+    "include": ["src/"],
+    "exclude": [".vscode"],
+    "rules": {
+      "tags": ["recommended", "strict"],
+      "include": ["ban-untagged-todo", "no-unused-vars"],
+      "exclude": []
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 80,
+    "indentWidth": 2,
+    "semiColons": false,
+    "singleQuote": false,
+    "proseWrap": "never",
+    "include": ["./"]
+  },
+  "tasks": {
+    "build": "aiken build && deno run -A https://deno.land/x/lucid@0.10.6/blueprint.ts"
+  }
+}

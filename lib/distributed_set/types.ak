@@ -4,7 +4,7 @@ use aiken/transaction/credential.{Script}
 
 pub type ListRedeemer {
   Unit
-  BinarySplit(OutputReference)
+  BinarySplit { consuming: OutputReference }
 }
 
 pub type ListDatum {
