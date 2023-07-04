@@ -3,6 +3,8 @@
     "/": "./",
     "./": "./",
     "lucid": "https://deno.land/x/lucid@0.10.6/mod.ts",
+    "lucid/": "https://deno.land/x/lucid@0.10.6/",
+    "distributed_set": "./plutus.ts",
     "src": "./src"
   },
   "lint": {
@@ -24,6 +26,7 @@
     "include": ["./"]
   },
   "tasks": {
-    "build": "aiken build && deno run -A https://deno.land/x/lucid@0.10.6/blueprint.ts"
+    "build": "aiken build -k && deno run -A https://deno.land/x/lucid@0.10.6/blueprint.ts",
+    "run": "deno run -A ./src/main.ts"
   }
 }
