@@ -1,3 +1,4 @@
+import { assert } from "std/testing/asserts.ts"
 import { Emulator, generatePrivateKey, Lucid } from "lucid"
 import { breakSet, continueSet, createSet } from "./distributed_set.ts"
 
@@ -32,6 +33,7 @@ Deno.test("Create 1", async () => {
     submittedTx,
     submittedTx.ids[0],
   )
+  assert(continuedTx != null)
   //console.log(continuedTx)
 })
 
@@ -49,6 +51,7 @@ Deno.test("Basic Continuing Test", async () => {
     submittedTx,
     submittedTx.ids[0],
   )
+  assert(continuedTx != null)
   //console.log(continuedTx)
 })
 

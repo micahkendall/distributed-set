@@ -4,6 +4,7 @@
     "./": "./",
     "lucid": "https://deno.land/x/lucid@0.10.6/mod.ts",
     "lucid/": "https://deno.land/x/lucid@0.10.6/",
+    "std/": "https://deno.land/std@0.145.0/",
     "distributed_set": "./plutus.ts",
     "src": "./src"
   },

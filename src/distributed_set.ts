@@ -199,14 +199,14 @@ export async function breakSet(
   //           RequireStake: [string];
   //       } | null;
   //   }
-  let first_datum: DistributedSetSpendDistributedSet["datum"] = {
+  const first_datum: DistributedSetSpendDistributedSet["datum"] = {
     id: datum.id,
     next: newid,
     isHead: datum.isHead,
     values: ["01", "02"],
     requires: datum.requires,
   }
-  let next_datum: DistributedSetSpendDistributedSet["datum"] = {
+  const next_datum: DistributedSetSpendDistributedSet["datum"] = {
     id: newid,
     next: datum.next,
     isHead: false,
