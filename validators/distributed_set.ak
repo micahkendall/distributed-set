@@ -73,24 +73,18 @@ validator(genesis_utxo: OutputReference) {
            )
     when redeemer is {
       Unit -> {
-        trace @"2"
         // convert to assert_any
         let asset_name = genesis_utxo |> util.data_hash
-        trace @"3.1"
         expect [Output(_, new_val, new_datum_out, _)] =
           outputs
             |> outputs_at_cred(this_credential)
-        trace @"3.2"
         expect InlineDatum(new_list_raw) = new_datum_out
-        trace @"3.3"
         expect [_, (out_policy, _out_asset_name, out_asset_amt)] =
           new_val |> value.flatten
         // && out_asset_name == asset_name
         // the only possible minted value at genesis is the correct asset name.
-        trace @"3.4"
         expect ListDatum { id, next, is_head, requires, values }: ListDatum =
           new_list_raw
-        trace @"4"
         //
         let sort_check = util.is_sorted(values)
         let script_call_check =
@@ -100,7 +94,6 @@ validator(genesis_utxo: OutputReference) {
         let asset_sent_check = out_asset_amt == 1
         let next_check = next == None
         //
-        trace @"5"
         [
           has_input(inputs, genesis_utxo)?,
           (minted_here == (this_policy, asset_name, 1))?,
@@ -126,7 +119,6 @@ validator(genesis_utxo: OutputReference) {
           inputs
             |> has_input(output_reference),
           minted_here == (this_policy, asset_name, 1),
-          False,
         ]
           |> list.and
       }
@@ -138,6 +130,7 @@ validator(genesis_utxo: OutputReference) {
     redeemer: ListRedeemer,
     ctx,
   ) -> Bool {
+    trace @"1"
     // should enforce only one input from this script
     // then, enforce on all the outputs that the list is maintained,
     // and that those outputs have the list NFT.
@@ -148,11 +141,14 @@ validator(genesis_utxo: OutputReference) {
     expect Spend(output_reference) = purpose
     let minted = value.from_minted_value(mint)
     // find this
+    trace @"2"
     expect Some(Input {
       output: Output(this_address, val, InlineDatum(_), None),
       ..
     }) = inputs |> find_input(output_reference)
-    expect [in_nft_tuple] = val |> value.flatten
+    trace @"3"
+    expect [_, in_nft_tuple] = val |> value.flatten
+    trace @"4"
     // let (_this_nft_policy, [(_this_nft_assetname, this_nft_amount)]) = in_nft_tuple
     // assert only one input from this script
     let this_credential = this_address.payment_credential
@@ -165,10 +161,12 @@ validator(genesis_utxo: OutputReference) {
     // the list is assumed to be sorted as invariant is maintained by mint,control
     // spending, there should be either two outputs at this script, or one.
     // this is decided by the ListSpendRedeemer
+    trace @"5"
     let script_call_check =
       requires
         |> option.map(was_invoked(_, minted, withdrawals))
         |> option.or_else(True)
+    trace @"a"
     when redeemer is {
       Unit -> {
         // assert that the singular output at this address, is the same as the input, except for the inner values
@@ -181,7 +179,9 @@ validator(genesis_utxo: OutputReference) {
             outputs,
             fn(output) { output.address.payment_credential == this_credential },
           )
-        expect [out_nft_tuple] = new_val |> value.flatten
+        trace @"b"
+        expect [_, out_nft_tuple] = new_val |> value.flatten
+        trace @"c"
         expect ListDatum {
           id: new_id,
           next: new_next,
@@ -189,6 +189,7 @@ validator(genesis_utxo: OutputReference) {
           values: new_values,
           requires: new_req,
         }: ListDatum = new_list_raw
+        trace @"d"
         let nft_check = out_nft_tuple == in_nft_tuple
         let continuing_check = new_id == id && new_is_head == is_head
         let required_script_check = new_req == requires
@@ -197,7 +198,7 @@ validator(genesis_utxo: OutputReference) {
         let tail_check =
           next == None || list.last(values) == list.last(new_values)
         let sort_check = util.is_sorted(new_values)
-
+        trace @"e"
         // next is the same
         // if head, smaller values may be added, otherwise they may not
         // if tail, larger values may be added, otherwise they may not
@@ -205,18 +206,19 @@ validator(genesis_utxo: OutputReference) {
         let utxo_checks = [inputs_from_here_check, nft_check] |> list.and
         let list_checks =
           [
-            continuing_check,
-            next_check,
-            head_check,
-            sort_check,
-            tail_check,
-            required_script_check,
+            continuing_check?,
+            next_check?,
+            head_check?,
+            sort_check?,
+            tail_check?,
+            required_script_check?,
           ]
             |> list.and
         [utxo_checks, list_checks, script_call_check]
           |> list.and
       }
       BinarySplit(_) -> {
+        trace @"b2"
         // find the tagged continuing output
         // the output directly after, is the second output
         // (using ordering)
@@ -224,8 +226,11 @@ validator(genesis_utxo: OutputReference) {
           Output(_, new_val, InlineDatum(new_list_raw), None),
           Output(_, new_val_2, InlineDatum(new_list_raw_2), None),
         ] = outputs |> outputs_at_cred(this_credential)
-        expect [new_val_nft_tuple] = new_val |> value.flatten
-        expect [new_val_nft_tuple_2] = new_val_2 |> value.flatten
+        trace @"c2"
+        expect [_, new_val_nft_tuple] = new_val |> value.flatten
+        trace @"d2"
+        expect [_, new_val_nft_tuple_2] = new_val_2 |> value.flatten
+        trace @"e2"
         expect ListDatum {
           id: new_id,
           next: new_next,
@@ -233,6 +238,7 @@ validator(genesis_utxo: OutputReference) {
           values: new_values,
           requires: new_req,
         }: ListDatum = new_list_raw
+        trace @"f2"
         expect ListDatum {
           id: new_id2,
           next: new_next2,
@@ -240,6 +246,7 @@ validator(genesis_utxo: OutputReference) {
           values: new_values2,
           requires: new_req2,
         }: ListDatum = new_list_raw_2
+        trace @"g2"
         let (the_nft_policy, _, _) = new_val_nft_tuple
         let new_nft_tuple =
           (the_nft_policy, util.data_hash(output_reference), 1)
@@ -252,19 +259,20 @@ validator(genesis_utxo: OutputReference) {
         let head_check = new_is_head == is_head
         let sort_check =
           util.is_sorted(new_values) && util.is_sorted(new_values2)
-        let tail_check = False
+        let tail_check = True
         // heads are allowed to be empty, tails must have 1, and non-heads must have 2+ elements.
         // each list node must contain the relevant nft.
+        trace @"h2"
         [
-          inputs_from_here_check,
-          continuing_check,
-          required_script_check,
-          sort_check,
-          nft_check,
-          next_check,
-          head_check,
-          tail_check,
-          script_call_check,
+          inputs_from_here_check?,
+          continuing_check?,
+          required_script_check?,
+          sort_check?,
+          nft_check?,
+          next_check?,
+          head_check?,
+          tail_check?,
+          script_call_check?,
         ]
           |> list.and
       }

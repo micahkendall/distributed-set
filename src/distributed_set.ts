@@ -64,6 +64,13 @@ export async function createSet(lucid: Lucid, now: number) {
     "Unit",
     DistributedSetMintDistributedSet["redeemer"],
   )
+  const initial_datum: DistributedSetSpendDistributedSet["datum"] = {
+    id: assetName,
+    next: null,
+    isHead: true,
+    values: ["01", "03"],
+    requires: null,
+  }
 
   const tx = await lucid.newTx()
     .validTo(now + 30000)
@@ -72,13 +79,7 @@ export async function createSet(lucid: Lucid, now: number) {
       scriptAddress,
       {
         inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
-          {
-            id: assetName,
-            next: null,
-            isHead: true,
-            values: [],
-            requires: null,
-          },
+          initial_datum,
           DistributedSetSpendDistributedSet["datum"],
         ),
       },
@@ -148,6 +149,114 @@ export async function continueSet(
       },
       {
         [unit]: 1n,
+      },
+    )
+    .complete()
+  const signedTx = await tx.sign().complete()
+  return signedTx.submit()
+}
+
+export async function breakSet(
+  lucid: Lucid,
+  now: number,
+  details: SetDetails,
+  id: string,
+) {
+  const unit = toUnit(details.policyId, id)
+  const utxo = await lucid.utxoByUnit(unit)
+  const oref = {
+    consuming: {
+      transactionId: { hash: utxo.txHash },
+      outputIndex: BigInt(utxo.outputIndex),
+    },
+  }
+  const newid = nameFromUTxO(utxo)
+  const assetName = toUnit(details.policyId, newid)
+  const spend_redeemer: DistributedSetSpendDistributedSet["redeemer"] = {
+    wrapper: {
+      ["BinarySplit"]: oref,
+    },
+  }
+  const mint_redeemer: DistributedSetMintDistributedSet["redeemer"] = {
+    ["BinarySplit"]: oref,
+  }
+  // const assetName = nameFromUTxO(utxo)
+  const datum = {
+    id: id,
+    next: null,
+    isHead: true,
+    values: [],
+    requires: null,
+  }
+  // {
+  //   id: string;
+  //   next: string | null;
+  //   isHead: boolean;
+  //   values: string[];
+  //   requires: {
+  //       RequireMint: [string];
+  //       } | {
+  //           RequireStake: [string];
+  //       } | null;
+  //   }
+  let first_datum: DistributedSetSpendDistributedSet["datum"] = {
+    id: datum.id,
+    next: newid,
+    isHead: datum.isHead,
+    values: ["01", "02"],
+    requires: datum.requires,
+  }
+  let next_datum: DistributedSetSpendDistributedSet["datum"] = {
+    id: newid,
+    next: datum.next,
+    isHead: false,
+    values: ["03"],
+    requires: datum.requires,
+  }
+  const tx = await lucid.newTx()
+    .validTo(now + 30000)
+    .attachSpendingValidator(
+      details.script,
+    )
+    .attachMintingPolicy(details.script)
+    .collectFrom(
+      [utxo],
+      Data.to<DistributedSetSpendDistributedSet["redeemer"]>(
+        spend_redeemer,
+        DistributedSetSpendDistributedSet["redeemer"],
+      ),
+    )
+    .mintAssets(
+      {
+        [assetName]: 1n,
+      },
+      Data.to<DistributedSetMintDistributedSet["redeemer"]>(
+        mint_redeemer,
+        DistributedSetMintDistributedSet["redeemer"],
+      ),
+    )
+    .payToAddressWithData(
+      details.scriptAddress,
+      {
+        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+          first_datum,
+          DistributedSetSpendDistributedSet["datum"],
+        ),
+      },
+      {
+        [unit]: 1n,
+      },
+    )
+    .payToAddressWithData(
+      details.scriptAddress,
+      {
+        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+          next_datum,
+          DistributedSetSpendDistributedSet["datum"],
+        ),
+      },
+      {
+        [assetName]: 1n,
       },
     )
     .complete()

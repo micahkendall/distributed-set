@@ -26,7 +26,8 @@
     "include": ["./"]
   },
   "tasks": {
-    "build": "aiken build -k && deno run -A https://deno.land/x/lucid@0.10.6/blueprint.ts",
-    "run": "deno run -A ./src/main.ts"
+    "build": "aiken build -k && deno run -A https://deno.land/x/lucid@0.10.6/blueprint.ts && deno fmt",
+    "run": "deno run -A ./src/main.ts",
+    "test": "deno test -A ./src/test.ts"
   }
 }

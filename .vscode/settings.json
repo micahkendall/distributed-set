@@ -1,9 +1,9 @@
 {
-    "deno.enable": true,
-    "deno.unstable": true,
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "denoland.vscode-deno",
-    "[aiken]": {
-      "editor.defaultFormatter": "txpipe.aiken"
-    }
+  "deno.enable": true,
+  "deno.unstable": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "denoland.vscode-deno",
+  "[aiken]": {
+    "editor.defaultFormatter": "txpipe.aiken"
   }
+}

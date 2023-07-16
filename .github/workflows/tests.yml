@@ -1,0 +1,34 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: aiken-lang/setup-aiken@v0.1.0
+        with:
+          version: v1.0.11-alpha
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - run: aiken fmt --check
+      - run: deno fmt --check
+      - run: deno lint
+      - run: deno task build
+      - run: deno test -A --coverage=cov/
+      - run: deno coverage --lcov cov/ > cov.lcov
+      - name: Archive Deno coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: deno coverage-raw
+          path: |
+            cov.lcov
