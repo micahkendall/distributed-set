@@ -10,7 +10,6 @@ pub fn find(l: List<a>, f: fn(a) -> Bool) -> a {
       } else {
         find(xs, f)
       }
-    _ ->
-      error
+    _ -> error
   }
 }

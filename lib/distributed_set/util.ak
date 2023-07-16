@@ -9,28 +9,22 @@ pub fn data_hash(d: Data) -> Hash<Blake2b_224, Data> {
 // strict sort validator
 pub fn is_sorted(l: List<ByteArray>) -> Bool {
   when l is {
-    [] ->
-      True
-    [_] ->
-      True
-    [x, y, ..xs] ->
-      builtin.less_than_bytearray(x, y) && is_sorted([y, ..xs])
+    [] -> True
+    [_] -> True
+    [x, y, ..xs] -> builtin.less_than_bytearray(x, y) && is_sorted([y, ..xs])
   }
 }
 
 pub fn sum_map(l: List<a>, f: fn(a) -> Int) -> Int {
   when l is {
-    [] ->
-      0
-    [x, ..xs] ->
-      f(x) + sum_map(xs, f)
+    [] -> 0
+    [x, ..xs] -> f(x) + sum_map(xs, f)
   }
 }
 
 pub fn count_map(l: List<a>, f: fn(a) -> Bool) -> Int {
   when l is {
-    [] ->
-      0
+    [] -> 0
     [x, ..xs] ->
       if f(x) {
         1
