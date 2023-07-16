@@ -10,7 +10,6 @@ use aiken/transaction/value
 use distributed_set/types.{
   BinarySplit, ListDatum, ListRedeemer, RequireMint, RequireStake, Unit,
 }
-use distributed_set/unsafe_list
 use distributed_set/util
 
 // could implement required scripts by searching for a specific redeemer, and enforcing a particular redeemer type.
@@ -62,10 +61,10 @@ validator(genesis_utxo: OutputReference) {
     let this_credential = ScriptCredential(this_policy)
     let minted = mint |> value.from_minted_value
     trace @"1"
-    let minted_here =
+    expect Some(minted_here) =
       minted
         |> value.flatten
-        |> unsafe_list.find(
+        |> list.find(
              fn(minted_nfts) {
                let (policy, _, _) = minted_nfts
                policy == this_policy

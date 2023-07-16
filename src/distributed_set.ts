@@ -1,45 +1,17 @@
-import { Data, fromHex, Lucid, toHex, toUnit, UTxO } from "lucid"
+import { Data, Lucid, toUnit } from "lucid"
 import {
   DistributedSetMintDistributedSet,
   DistributedSetSpendDistributedSet,
 } from "distributed_set"
-import { hash_blake2b256 } from "lucid/src/core/libs/cardano_multiplatform_lib/cardano_multiplatform_lib.generated.js"
+import { nameFromUTxO } from "./util.ts"
 
-export type OutputReference = {
-  transactionId: { hash: string }
-  outputIndex: bigint
-}
+const MintRedeemer = DistributedSetMintDistributedSet["redeemer"]
+const SpendRedeemer = DistributedSetSpendDistributedSet["redeemer"]
+const Datum = DistributedSetSpendDistributedSet["datum"]
 
-export const OutputReference = Object.assign({
-  "title": "OutputReference",
-  "dataType": "constructor",
-  "index": 0,
-  "fields": [{
-    "title": "transactionId",
-    "description":
-      "A unique transaction identifier, as the hash of a transaction body. Note that the transaction id\n isn't a direct hash of the `Transaction` as visible on-chain. Rather, they correspond to hash\n digests of transaction body as they are serialized on the network.",
-    "anyOf": [{
-      "title": "TransactionId",
-      "dataType": "constructor",
-      "index": 0,
-      "fields": [{ "dataType": "bytes", "title": "hash" }],
-    }],
-  }, { "dataType": "integer", "title": "outputIndex" }],
-})
-
-export function nameFromUTxO(utxo: UTxO) {
-  const the_output_reference = Data.to<OutputReference>(
-    {
-      transactionId: { hash: utxo.txHash },
-      outputIndex: BigInt(utxo.outputIndex),
-    },
-    OutputReference,
-  )
-  const assetName = toHex(
-    hash_blake2b256(fromHex(the_output_reference)),
-  )
-  return assetName
-}
+type MintRedeemer = DistributedSetMintDistributedSet["redeemer"]
+type SpendRedeemer = DistributedSetSpendDistributedSet["redeemer"]
+type Datum = DistributedSetSpendDistributedSet["datum"]
 
 export async function createSet(lucid: Lucid, now: number) {
   const utxo = (await lucid.wallet.getUtxos())[0]
@@ -60,11 +32,11 @@ export async function createSet(lucid: Lucid, now: number) {
 
   const assetName = nameFromUTxO(utxo)
 
-  const redeemer = Data.to<DistributedSetMintDistributedSet["redeemer"]>(
+  const redeemer = Data.to<MintRedeemer>(
     "Unit",
-    DistributedSetMintDistributedSet["redeemer"],
+    MintRedeemer,
   )
-  const initial_datum: DistributedSetSpendDistributedSet["datum"] = {
+  const initial_datum: Datum = {
     id: assetName,
     next: null,
     isHead: true,
@@ -78,9 +50,9 @@ export async function createSet(lucid: Lucid, now: number) {
     .payToAddressWithData(
       scriptAddress,
       {
-        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+        inline: Data.to<Datum>(
           initial_datum,
-          DistributedSetSpendDistributedSet["datum"],
+          Datum,
         ),
       },
       {
@@ -117,7 +89,7 @@ export async function continueSet(
   const unit = toUnit(details.policyId, id)
   const utxo = await lucid.utxoByUnit(unit)
   console.log(await utxo)
-  const redeemer: DistributedSetSpendDistributedSet["redeemer"] = {
+  const redeemer: SpendRedeemer = {
     wrapper: "Unit",
   }
   const datum = {
@@ -134,17 +106,17 @@ export async function continueSet(
     )
     .collectFrom(
       [utxo],
-      Data.to<DistributedSetSpendDistributedSet["redeemer"]>(
+      Data.to<SpendRedeemer>(
         redeemer,
-        DistributedSetSpendDistributedSet["redeemer"],
+        SpendRedeemer,
       ),
     )
     .payToAddressWithData(
       details.scriptAddress,
       {
-        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+        inline: Data.to<Datum>(
           datum,
-          DistributedSetSpendDistributedSet["datum"],
+          Datum,
         ),
       },
       {
@@ -172,12 +144,12 @@ export async function breakSet(
   }
   const newid = nameFromUTxO(utxo)
   const assetName = toUnit(details.policyId, newid)
-  const spend_redeemer: DistributedSetSpendDistributedSet["redeemer"] = {
+  const spend_redeemer: SpendRedeemer = {
     wrapper: {
       ["BinarySplit"]: oref,
     },
   }
-  const mint_redeemer: DistributedSetMintDistributedSet["redeemer"] = {
+  const mint_redeemer: MintRedeemer = {
     ["BinarySplit"]: oref,
   }
   // const assetName = nameFromUTxO(utxo)
@@ -199,14 +171,14 @@ export async function breakSet(
   //           RequireStake: [string];
   //       } | null;
   //   }
-  const first_datum: DistributedSetSpendDistributedSet["datum"] = {
+  const first_datum: Datum = {
     id: datum.id,
     next: newid,
     isHead: datum.isHead,
     values: ["01", "02"],
     requires: datum.requires,
   }
-  const next_datum: DistributedSetSpendDistributedSet["datum"] = {
+  const next_datum: Datum = {
     id: newid,
     next: datum.next,
     isHead: false,
@@ -221,26 +193,26 @@ export async function breakSet(
     .attachMintingPolicy(details.script)
     .collectFrom(
       [utxo],
-      Data.to<DistributedSetSpendDistributedSet["redeemer"]>(
+      Data.to<SpendRedeemer>(
         spend_redeemer,
-        DistributedSetSpendDistributedSet["redeemer"],
+        SpendRedeemer,
       ),
     )
     .mintAssets(
       {
         [assetName]: 1n,
       },
-      Data.to<DistributedSetMintDistributedSet["redeemer"]>(
+      Data.to<MintRedeemer>(
         mint_redeemer,
-        DistributedSetMintDistributedSet["redeemer"],
+        MintRedeemer,
       ),
     )
     .payToAddressWithData(
       details.scriptAddress,
       {
-        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+        inline: Data.to<Datum>(
           first_datum,
-          DistributedSetSpendDistributedSet["datum"],
+          Datum,
         ),
       },
       {
@@ -250,9 +222,9 @@ export async function breakSet(
     .payToAddressWithData(
       details.scriptAddress,
       {
-        inline: Data.to<DistributedSetSpendDistributedSet["datum"]>(
+        inline: Data.to<Datum>(
           next_datum,
-          DistributedSetSpendDistributedSet["datum"],
+          Datum,
         ),
       },
       {
